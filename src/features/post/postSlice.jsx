@@ -19,7 +19,19 @@ export const fetchPosts = createAsyncThunk("posts/fetchPosts", async () => {
   }
 });
 
-const postSlice = createSlice({
+export const addNewPost = createAsyncThunk(
+  "post/addNewPosts",
+  async (initialPost) => {
+    try {
+      const response = await axios.post(POST_URL, initialPost);
+      return response.data;
+    } catch (err) {
+      return err.message;
+    }
+  },
+);
+
+export const postSlice = createSlice({
   name: "posts",
   initialState,
   reducers: {
@@ -64,15 +76,15 @@ const postSlice = createSlice({
         // Adding date and reactions
         let min = 1;
         const loadingPosts = action.payload.map((post) => {
-          post.date = sub(new Date(), { mintes: min++ }).toISOString;
+          post.date = sub(new Date(), { minutes: min++ }).toISOString();
           post.reactions = {
             thumbsUp: 0,
-            hooray: 0,
+            wow: 0,
             heart: 0,
             rocket: 0,
-            eyes: 0,
+            coffee: 0,
           };
-          return posts;
+          return post;
         });
         // add any fetched posts to the array
         state.posts = state.posts.concat(loadingPosts);
@@ -80,6 +92,19 @@ const postSlice = createSlice({
       .addCase(fetchPosts.rejected, (state, action) => {
         state.status = "failed";
         state.error = action.error.message;
+      })
+      .addCase(addNewPost.fulfilled, (state, action) => {
+        action.payload.userId = Number(action.payload.userId);
+        action.payload.date = new Date().toISOString();
+        action.payload.reactions = {
+          thumbsUp: 0,
+          wow: 0,
+          heart: 0,
+          rocket: 0,
+          coffee: 0,
+        };
+        console.log(action.payload);
+        state.posts.push(action.payload);
       });
   },
 });
